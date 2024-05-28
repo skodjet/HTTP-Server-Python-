@@ -11,10 +11,10 @@ by a port number above 2000.
 Once the program is running, open Mozilla Firefox, clear your cache, 
 and type the following:
 
-http://localhost:<port number>/<insert webpage url here>
+`http://localhost:<port number>/<insert webpage url here>`
 
-with <port number> replaced by the port number you initially chose, and 
-<insert webpage url here> replaced with the url to a webpage.
+with &lt;port number&gt; replaced by the port number you initially chose, and 
+&lt;insert webpage url here&gt; replaced with the url to a webpage.
 
 Wait until the page fully loads before clicking on any links.
 
