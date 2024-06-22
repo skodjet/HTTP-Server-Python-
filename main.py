@@ -67,6 +67,8 @@ try:
     while listening:
         (conn, addr) = listening_socket.accept()
 
+        print("Proxy server is listening for requests\n")
+
         # Buffer size of 4096 (4 Kilobytes)
         request = conn.recv(4096)
 
@@ -92,14 +94,13 @@ try:
 
         is_get = (request_type[:3] == 'GET')
 
-        # Handle requests that are not GET requests
+        # Present 501 not implemented for requests that are not GET requests
         if not is_get:
             not_implemented = "HTTP/1.0 501 Not Implemented\r\n\r\n"
 
         # Find the url of the website
         first_line_array = request_type.split(" ")
         url = first_line_array[1]
-
 
         # Get the url without the "http://" or "https://"
         secondary_url_index = url.find("//")
@@ -112,7 +113,7 @@ try:
         else:
             tertiary_url = secondary_url
 
-        # Create the correct GET request.
+        # Create the correct GET request (for requests not starting with http:// or http://)
         get_line = first_line_array[1]
         correct_get = "/"
         num_slashes = 0
@@ -121,9 +122,6 @@ try:
                 correct_get += char
             if char == "/":
                 num_slashes += 1
-
-        if num_slashes < 2:
-            correct_get = "/"
 
         # Create the correct hostname
         split_hostname_array = request_array[1].split(" ")
@@ -161,21 +159,34 @@ try:
                         correct_get = first_line_array[1]
 
         elif subsequent_request:
+            # Check if there is an "http://" or "http://" line inside the subsequent request
+            double_slash_pos = get_line.find("//")
+
+            # Remove "http://" or "https://" if it exists (but keep the second slash for proper GET request formatting)
+            if double_slash_pos != -1:
+                correct_get = (first_line_array[1])[double_slash_pos + 1:]
+            else:
+                correct_get = first_line_array[1]
+
             correct_hostname = webserver_name
             tertiary_url = webserver_name[5:]
-            correct_get = first_line_array[1]
+
+        # Handle cases where an initial request starts with http:// or http://
+        # In this case, the GET request should just be "/"
+        if secondary_url_index != -1 and secondary_url == tertiary_url:
+            correct_get = "/"
 
         # Reassemble the request
         http_type = first_line_array[2]
         unencoded_request = "GET " + correct_get + " " + http_type + "\r\n" + correct_hostname + "\r\n"
+
+        print("Sending request", unencoded_request)
 
         for j in range(2, len(request_array)):
             unencoded_request += request_array[j]
             unencoded_request += "\r\n"
 
         unencoded_request = unencoded_request[:-2]
-
-        # unencoded_request += "\r\n"
 
         encoded_request = unencoded_request.encode('utf-8')
 
